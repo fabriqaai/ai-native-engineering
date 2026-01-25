@@ -1,0 +1,71 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AI-Native Engineering",
+  "description": "Defining the principles of software creation in the age of intelligent collaboration",
+  "logo": {
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
+  },
+  "favicon": "/images/favicon.svg",
+  "colors": {
+    "primary": "#000000",
+    "light": "#333333",
+    "dark": "#000000"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "specs.md",
+        "href": "https://specs.md",
+        "icon": "/images/specsmdicon.png"
+      }
+    ]
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Manifesto",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "index"
+            ]
+          },
+          {
+            "group": "The Manifesto",
+            "pages": [
+              "manifesto/values",
+              "manifesto/principles",
+              "manifesto/vibe-to-spec"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/maturity-model",
+              "resources/tools"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sidebar": {
+    "banner": {
+      "image": "/images/specs_md_pixel_logo.png",
+      "href": "https://specs.md"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://specs.md"
+    }
+  },
+  "scripts": [
+    {
+      "src": "/scripts/footer-logo.js"
+    }
+  ]
+}
