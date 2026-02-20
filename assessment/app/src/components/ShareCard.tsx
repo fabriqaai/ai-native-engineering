@@ -19,7 +19,7 @@ export default function ShareCard({ result, tools, teamSize }: ShareCardProps) {
     try {
       const { default: html2canvas } = await import("html2canvas-pro");
       const canvas = await html2canvas(cardEl, {
-        backgroundColor: "#0d1117",
+        backgroundColor: "#f8f8f7",
         scale: 2,
       });
       const link = document.createElement("a");
