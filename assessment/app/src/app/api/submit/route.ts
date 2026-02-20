@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAssessmentSchema, getPool } from "@/lib/db";
+import assessmentData from "../../../../questions.json";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,27 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const DEFAULT_RESULTS_TO_EMAIL = "cengiz@cengizhan.com";
 const DEFAULT_RESULTS_FROM_EMAIL =
   "AI Native Engineering <onboarding@resend.dev>";
+
+type MaturityQuestionDef = {
+  id: string;
+  prompt: string;
+  answers: Array<{ level: number; text: string }>;
+};
+
+type MarketResearchQuestionDef = {
+  id: string;
+  prompt: string;
+  type: "single-select" | "multi-select" | "open-text";
+  options?: string[];
+};
+
+const questionBank = assessmentData as {
+  maturityQuestions: MaturityQuestionDef[];
+  marketResearchQuestions: MarketResearchQuestionDef[];
+};
+
+const MATURITY_QUESTIONS = questionBank.maturityQuestions;
+const MARKET_RESEARCH_QUESTIONS = questionBank.marketResearchQuestions;
 
 const CAPABILITY_IDS = [
   "specs",
@@ -43,6 +65,17 @@ type EmailSubmitPayload = {
   email?: unknown;
 };
 
+type AssessmentRow = {
+  id: string;
+  screening_answer: string;
+  answers: unknown;
+  score_overall: number | null;
+  archetype_id: string | null;
+  created_at: Date | string;
+  session_id: string | null;
+  email: string | null;
+};
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -60,11 +93,179 @@ function safeJson(value: unknown): string {
   }
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeSelectedValues(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => isNonEmptyString(item));
+  }
+
+  if (isNonEmptyString(value)) {
+    return [value];
+  }
+
+  return [];
+}
+
+function linesToHtml(lines: string[]): string {
+  const items = lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+  return `<ul>${items}</ul>`;
+}
+
+function formatMaturityAnswers(
+  answersInput: unknown
+): { text: string; html: string } {
+  const answers = isRecord(answersInput) ? answersInput : {};
+  const textSections: string[] = [];
+  const htmlSections: string[] = [];
+
+  for (const question of MATURITY_QUESTIONS) {
+    const selectedLevelRaw = answers[question.id];
+    const selectedLevel =
+      typeof selectedLevelRaw === "number" ? selectedLevelRaw : null;
+    const selectedAnswer =
+      selectedLevel === null
+        ? null
+        : question.answers.find((option) => option.level === selectedLevel) ??
+          null;
+    const selectedText = selectedAnswer
+      ? `L${selectedAnswer.level}: ${selectedAnswer.text}`
+      : "No answer";
+
+    const optionLines = question.answers.map((option) => {
+      const marker = selectedLevel === option.level ? " [selected]" : "";
+      return `- L${option.level}: ${option.text}${marker}`;
+    });
+
+    textSections.push(
+      `${question.id}. ${question.prompt}`,
+      `Selected: ${selectedText}`,
+      "Options:",
+      ...optionLines,
+      ""
+    );
+
+    const optionHtml = question.answers
+      .map((option) => {
+        const selected =
+          selectedLevel === option.level ? " <strong>(selected)</strong>" : "";
+        return `<li>L${option.level}: ${escapeHtml(option.text)}${selected}</li>`;
+      })
+      .join("");
+
+    htmlSections.push(
+      `<section>`,
+      `<h4>${escapeHtml(`${question.id}. ${question.prompt}`)}</h4>`,
+      `<p><strong>Selected:</strong> ${escapeHtml(selectedText)}</p>`,
+      `<p><strong>Options:</strong></p>`,
+      `<ul>${optionHtml}</ul>`,
+      `</section>`
+    );
+  }
+
+  return {
+    text: textSections.join("\n").trim(),
+    html: htmlSections.join("\n"),
+  };
+}
+
+function formatMarketResearchAnswers(
+  marketResearchInput: unknown
+): { text: string; html: string } {
+  const responses = isRecord(marketResearchInput) ? marketResearchInput : {};
+  const textSections: string[] = [];
+  const htmlSections: string[] = [];
+
+  for (const question of MARKET_RESEARCH_QUESTIONS) {
+    const rawResponse = responses[question.id];
+    const response = isRecord(rawResponse) ? rawResponse : {};
+    const selectedValues = normalizeSelectedValues(response.selected);
+    const otherValue = isNonEmptyString(response.other)
+      ? response.other.trim()
+      : "";
+    const textValue = isNonEmptyString(response.text)
+      ? response.text.trim()
+      : "";
+
+    const selectedText =
+      selectedValues.length > 0 ? selectedValues.join(", ") : "No selection";
+    const lines = [
+      `${question.id}. ${question.prompt}`,
+      `Selected: ${selectedText}`,
+    ];
+
+    if (textValue) {
+      lines.push(`Text answer: ${textValue}`);
+    }
+
+    if (otherValue) {
+      lines.push(`Other answer: ${otherValue}`);
+    }
+
+    if (question.options && question.options.length > 0) {
+      lines.push("Options:");
+      lines.push(
+        ...question.options.map((option) => {
+          const marker = selectedValues.includes(option) ? " [selected]" : "";
+          return `- ${option}${marker}`;
+        })
+      );
+    }
+
+    if (!isRecord(rawResponse) && rawResponse !== undefined) {
+      lines.push(`Raw response: ${safeJson(rawResponse)}`);
+    }
+
+    lines.push("");
+    textSections.push(...lines);
+
+    const optionHtml =
+      question.options && question.options.length > 0
+        ? `<p><strong>Options:</strong></p><ul>${question.options
+            .map((option) => {
+              const selected = selectedValues.includes(option)
+                ? " <strong>(selected)</strong>"
+                : "";
+              return `<li>${escapeHtml(option)}${selected}</li>`;
+            })
+            .join("")}</ul>`
+        : "";
+
+    const rawHtml =
+      !isRecord(rawResponse) && rawResponse !== undefined
+        ? `<p><strong>Raw response:</strong> ${escapeHtml(safeJson(rawResponse))}</p>`
+        : "";
+
+    htmlSections.push(
+      `<section>`,
+      `<h4>${escapeHtml(`${question.id}. ${question.prompt}`)}</h4>`,
+      `<p><strong>Selected:</strong> ${escapeHtml(selectedText)}</p>`,
+      textValue
+        ? `<p><strong>Text answer:</strong> ${escapeHtml(textValue)}</p>`
+        : "",
+      otherValue
+        ? `<p><strong>Other answer:</strong> ${escapeHtml(otherValue)}</p>`
+        : "",
+      optionHtml,
+      rawHtml,
+      `</section>`
+    );
+  }
+
+  return {
+    text: textSections.join("\n").trim(),
+    html: htmlSections.join("\n"),
+  };
+}
 type SubmissionEmailInput = {
   subject: string;
   title: string;
   lines: string[];
   payload?: unknown;
+  textBody?: string;
+  htmlBody?: string;
 };
 
 async function sendSubmissionEmail({
@@ -72,6 +273,8 @@ async function sendSubmissionEmail({
   title,
   lines,
   payload,
+  textBody,
+  htmlBody,
 }: SubmissionEmailInput): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -82,22 +285,19 @@ async function sendSubmissionEmail({
   const to = process.env.RESULTS_TO_EMAIL ?? DEFAULT_RESULTS_TO_EMAIL;
   const from = process.env.RESULTS_FROM_EMAIL ?? DEFAULT_RESULTS_FROM_EMAIL;
   const payloadJson = payload === undefined ? "" : safeJson(payload);
-  const text = [
-    title,
-    "",
-    ...lines,
-    ...(payloadJson ? ["", "Payload:", payloadJson] : []),
-  ].join("\n");
+  const text =
+    textBody ??
+    [title, "", ...lines, ...(payloadJson ? ["", "Payload:", payloadJson] : [])].join(
+      "\n"
+    );
 
-  const htmlLines = lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("");
-  const htmlPayload = payloadJson
-    ? `<h3>Payload</h3><pre>${escapeHtml(payloadJson)}</pre>`
-    : "";
-  const html = `
-    <h2>${escapeHtml(title)}</h2>
-    <ul>${htmlLines}</ul>
-    ${htmlPayload}
-  `;
+  const html =
+    htmlBody ??
+    `
+      <h2>${escapeHtml(title)}</h2>
+      ${linesToHtml(lines)}
+      ${payloadJson ? `<h3>Payload</h3><pre>${escapeHtml(payloadJson)}</pre>` : ""}
+    `;
 
   try {
     const response = await fetch(RESEND_ENDPOINT, {
@@ -233,6 +433,26 @@ function setAssessmentCookie(response: NextResponse, assessmentId: string) {
   });
 }
 
+async function getMarketResearchMap(assessmentId: string) {
+  const pool = getPool();
+  const result = await pool.query<{ question_id: string; response: unknown }>(
+    `
+      SELECT question_id, response
+      FROM market_research_responses
+      WHERE assessment_id = $1
+      ORDER BY question_id
+    `,
+    [assessmentId]
+  );
+
+  const marketResearch: Record<string, unknown> = {};
+  for (const row of result.rows) {
+    marketResearch[row.question_id] = row.response;
+  }
+
+  return marketResearch;
+}
+
 export async function POST(request: NextRequest) {
   let body: AssessmentSubmitPayload;
 
@@ -309,6 +529,8 @@ export async function POST(request: NextRequest) {
       ]
     );
 
+    const maturityDetails = formatMaturityAnswers(answers);
+
     await sendSubmissionEmail({
       subject: `Assessment submitted: ${assessmentId}`,
       title: "Assessment submission",
@@ -320,10 +542,37 @@ export async function POST(request: NextRequest) {
         `sessionId: ${sessionId}`,
         `submittedAt: ${new Date().toISOString()}`,
       ],
-      payload: {
-        answers,
-        capabilityScores,
-      },
+      textBody: [
+        "Assessment submission",
+        "",
+        `assessmentId: ${assessmentId}`,
+        `screening: ${body.screening_answer}`,
+        `overallScore: ${overallScore ?? "n/a"}`,
+        `archetype: ${archetypeId ?? "n/a"}`,
+        `sessionId: ${sessionId}`,
+        `submittedAt: ${new Date().toISOString()}`,
+        "",
+        "Maturity responses:",
+        maturityDetails.text,
+        "",
+        "Capability scores:",
+        safeJson(capabilityScores),
+      ].join("\n"),
+      htmlBody: `
+        <h2>Assessment submission</h2>
+        ${linesToHtml([
+          `assessmentId: ${assessmentId}`,
+          `screening: ${body.screening_answer}`,
+          `overallScore: ${overallScore ?? "n/a"}`,
+          `archetype: ${archetypeId ?? "n/a"}`,
+          `sessionId: ${sessionId}`,
+          `submittedAt: ${new Date().toISOString()}`,
+        ])}
+        <h3>Maturity responses</h3>
+        ${maturityDetails.html}
+        <h3>Capability scores</h3>
+        <pre>${escapeHtml(safeJson(capabilityScores))}</pre>
+      `,
     });
 
     const response = NextResponse.json({ ok: true, assessmentId });
@@ -428,6 +677,8 @@ export async function PUT(request: NextRequest) {
       client.release();
     }
 
+    const marketDetails = formatMarketResearchAnswers(body.marketResearch);
+
     await sendSubmissionEmail({
       subject: `Market research submitted: ${assessmentId}`,
       title: "Market research submission",
@@ -436,7 +687,26 @@ export async function PUT(request: NextRequest) {
         `responseCount: ${responses.length}`,
         `submittedAt: ${new Date().toISOString()}`,
       ],
-      payload: body.marketResearch,
+      textBody: [
+        "Market research submission",
+        "",
+        `assessmentId: ${assessmentId}`,
+        `responseCount: ${responses.length}`,
+        `submittedAt: ${new Date().toISOString()}`,
+        "",
+        "Market research responses:",
+        marketDetails.text,
+      ].join("\n"),
+      htmlBody: `
+        <h2>Market research submission</h2>
+        ${linesToHtml([
+          `assessmentId: ${assessmentId}`,
+          `responseCount: ${responses.length}`,
+          `submittedAt: ${new Date().toISOString()}`,
+        ])}
+        <h3>Market research responses</h3>
+        ${marketDetails.html}
+      `,
     });
 
     const response = NextResponse.json({
@@ -487,11 +757,20 @@ export async function PATCH(request: NextRequest) {
   try {
     await ensureAssessmentSchema();
     const pool = getPool();
-    const result = await pool.query(
+    const result = await pool.query<AssessmentRow>(
       `
         UPDATE assessments
         SET email = $1
         WHERE id = $2
+        RETURNING
+          id,
+          screening_answer,
+          answers,
+          score_overall,
+          archetype_id,
+          created_at,
+          session_id,
+          email
       `,
       [email, assessmentId]
     );
@@ -503,6 +782,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const updatedAssessment = result.rows[0];
+    const marketResearchMap = await getMarketResearchMap(assessmentId);
+    const maturityDetails = formatMaturityAnswers(updatedAssessment.answers);
+    const marketDetails = formatMarketResearchAnswers(marketResearchMap);
+
     await sendSubmissionEmail({
       subject: `Email captured: ${assessmentId}`,
       title: "Email capture submission",
@@ -511,6 +795,41 @@ export async function PATCH(request: NextRequest) {
         `email: ${email}`,
         `submittedAt: ${new Date().toISOString()}`,
       ],
+      textBody: [
+        "Email capture submission",
+        "",
+        `assessmentId: ${assessmentId}`,
+        `userEmail: ${updatedAssessment.email ?? email}`,
+        `screening: ${updatedAssessment.screening_answer}`,
+        `overallScore: ${updatedAssessment.score_overall ?? "n/a"}`,
+        `archetype: ${updatedAssessment.archetype_id ?? "n/a"}`,
+        `sessionId: ${updatedAssessment.session_id ?? "n/a"}`,
+        `createdAt: ${new Date(updatedAssessment.created_at).toISOString()}`,
+        `submittedAt: ${new Date().toISOString()}`,
+        "",
+        "Maturity responses:",
+        maturityDetails.text,
+        "",
+        "Market research responses:",
+        marketDetails.text,
+      ].join("\n"),
+      htmlBody: `
+        <h2>Email capture submission</h2>
+        ${linesToHtml([
+          `assessmentId: ${assessmentId}`,
+          `userEmail: ${updatedAssessment.email ?? email}`,
+          `screening: ${updatedAssessment.screening_answer}`,
+          `overallScore: ${updatedAssessment.score_overall ?? "n/a"}`,
+          `archetype: ${updatedAssessment.archetype_id ?? "n/a"}`,
+          `sessionId: ${updatedAssessment.session_id ?? "n/a"}`,
+          `createdAt: ${new Date(updatedAssessment.created_at).toISOString()}`,
+          `submittedAt: ${new Date().toISOString()}`,
+        ])}
+        <h3>Maturity responses</h3>
+        ${maturityDetails.html}
+        <h3>Market research responses</h3>
+        ${marketDetails.html}
+      `,
     });
 
     const response = NextResponse.json({ ok: true });
