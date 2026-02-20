@@ -6,6 +6,10 @@ export const runtime = "nodejs";
 
 const COOKIE_ASSESSMENT_ID = "assessment_id";
 const COOKIE_SESSION_ID = "assessment_session_id";
+const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const DEFAULT_RESULTS_TO_EMAIL = "cengiz@cengizhan.com";
+const DEFAULT_RESULTS_FROM_EMAIL =
+  "AI Native Engineering <onboarding@resend.dev>";
 
 const CAPABILITY_IDS = [
   "specs",
@@ -38,6 +42,89 @@ type EmailSubmitPayload = {
   assessment_id?: unknown;
   email?: unknown;
 };
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+type SubmissionEmailInput = {
+  subject: string;
+  title: string;
+  lines: string[];
+  payload?: unknown;
+};
+
+async function sendSubmissionEmail({
+  subject,
+  title,
+  lines,
+  payload,
+}: SubmissionEmailInput): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[submit][email] RESEND_API_KEY not configured");
+    return;
+  }
+
+  const to = process.env.RESULTS_TO_EMAIL ?? DEFAULT_RESULTS_TO_EMAIL;
+  const from = process.env.RESULTS_FROM_EMAIL ?? DEFAULT_RESULTS_FROM_EMAIL;
+  const payloadJson = payload === undefined ? "" : safeJson(payload);
+  const text = [
+    title,
+    "",
+    ...lines,
+    ...(payloadJson ? ["", "Payload:", payloadJson] : []),
+  ].join("\n");
+
+  const htmlLines = lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+  const htmlPayload = payloadJson
+    ? `<h3>Payload</h3><pre>${escapeHtml(payloadJson)}</pre>`
+    : "";
+  const html = `
+    <h2>${escapeHtml(title)}</h2>
+    <ul>${htmlLines}</ul>
+    ${htmlPayload}
+  `;
+
+  try {
+    const response = await fetch(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        text,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      console.error(
+        `[submit][email] Failed to send email: ${response.status} ${response.statusText} - ${message}`
+      );
+    }
+  } catch (error) {
+    console.error("[submit][email] Unexpected email error", error);
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -222,6 +309,23 @@ export async function POST(request: NextRequest) {
       ]
     );
 
+    await sendSubmissionEmail({
+      subject: `Assessment submitted: ${assessmentId}`,
+      title: "Assessment submission",
+      lines: [
+        `assessmentId: ${assessmentId}`,
+        `screening: ${body.screening_answer}`,
+        `overallScore: ${overallScore ?? "n/a"}`,
+        `archetype: ${archetypeId ?? "n/a"}`,
+        `sessionId: ${sessionId}`,
+        `submittedAt: ${new Date().toISOString()}`,
+      ],
+      payload: {
+        answers,
+        capabilityScores,
+      },
+    });
+
     const response = NextResponse.json({ ok: true, assessmentId });
     setTrackingCookies(response, assessmentId, sessionId);
     return response;
@@ -324,6 +428,17 @@ export async function PUT(request: NextRequest) {
       client.release();
     }
 
+    await sendSubmissionEmail({
+      subject: `Market research submitted: ${assessmentId}`,
+      title: "Market research submission",
+      lines: [
+        `assessmentId: ${assessmentId}`,
+        `responseCount: ${responses.length}`,
+        `submittedAt: ${new Date().toISOString()}`,
+      ],
+      payload: body.marketResearch,
+    });
+
     const response = NextResponse.json({
       ok: true,
       questionCount: responses.length,
@@ -387,6 +502,16 @@ export async function PATCH(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    await sendSubmissionEmail({
+      subject: `Email captured: ${assessmentId}`,
+      title: "Email capture submission",
+      lines: [
+        `assessmentId: ${assessmentId}`,
+        `email: ${email}`,
+        `submittedAt: ${new Date().toISOString()}`,
+      ],
+    });
 
     const response = NextResponse.json({ ok: true });
     setAssessmentCookie(response, assessmentId);
