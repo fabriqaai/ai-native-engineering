@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Native Maturity Assessment — Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 640px;
+    width: 100%;
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8b949e;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #21262d;
+    border-radius: 2px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 8px;
+  }
+  .question-prompt {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 28px;
+    color: #f0f6fc;
+  }
+  .framing {
+    font-size: 14px;
+    color: #8b949e;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: #161b22;
+    border-radius: 8px;
+    border-left: 3px solid #7c3aed;
+  }
+  .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .answer-btn {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: #e6edf3;
+    font-size: 15px;
+    line-height: 1.5;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+  }
+  .answer-btn:hover {
+    border-color: #7c3aed;
+    background: #1c1f2b;
+  }
+  .answer-btn.selected {
+    border-color: #7c3aed;
+    background: #1e1535;
+    box-shadow: 0 0 0 1px #7c3aed;
+  }
+  .screening-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .screening-btn {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px 24px;
+    color: #e6edf3;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .screening-btn:hover {
+    border-color: #7c3aed;
+    background: #1c1f2b;
+  }
+
+  /* Results */
+  .results { text-align: center; }
+  .archetype-name {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #7c3aed, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .archetype-tagline {
+    font-size: 16px;
+    color: #8b949e;
+    margin-bottom: 32px;
+    font-style: italic;
+  }
+  .score-big {
+    font-size: 72px;
+    font-weight: 800;
+    color: #f0f6fc;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .score-label {
+    font-size: 14px;
+    color: #8b949e;
+    margin-bottom: 40px;
+  }
+
+  /* Radar chart */
+  .radar-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  /* Dimension breakdown */
+  .dimensions {
+    text-align: left;
+    margin-bottom: 40px;
+  }
+  .dim-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .dim-name {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 100px;
+  }
+  .dim-bar-wrap {
+    flex: 1;
+    margin: 0 16px;
+    height: 8px;
+    background: #21262d;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dim-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4);
+    transition: width 0.6s ease;
+  }
+  .dim-score {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* Growth */
+  .growth-section {
+    text-align: left;
+    margin-bottom: 32px;
+  }
+  .growth-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .growth-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+  .growth-card .dim {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #7c3aed;
+    margin-bottom: 6px;
+  }
+  .growth-card .tip {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #c9d1d9;
+  }
+
+  /* Pre-explorer */
+  .pre-explorer {
+    text-align: center;
+    padding-top: 60px;
+  }
+  .pre-explorer h2 {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .pre-explorer p {
+    color: #8b949e;
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 24px;
+  }
+
+  .restart-btn {
+    background: linear-gradient(135deg, #7c3aed, #06b6d4);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 32px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  .restart-btn:hover { opacity: 0.9; }
+
+  .hidden { display: none; }
+
+  /* Processing animation */
+  .processing {
+    text-align: center;
+    padding-top: 120px;
+  }
+  .processing h2 {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #21262d;
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">AI-Native Engineering Maturity Assessment</div>
+
+  <!-- Screening -->
+  <div id="screen-screening">
+    <div class="question-prompt">Do you use any AI tools in your development work?</div>
+    <div class="screening-options">
+      <button class="screening-btn" onclick="handleScreening('regularly')">Yes, regularly</button>
+      <button class="screening-btn" onclick="handleScreening('experimented')">Yes, I've experimented</button>
+      <button class="screening-btn" onclick="handleScreening('no')">No, not yet</button>
+    </div>
+  </div>
+
+  <!-- Questions -->
+  <div id="screen-questions" class="hidden">
+    <div class="progress-text" id="progress-text"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="framing-text" class="framing hidden">Pick the option closest to your <strong>current</strong> practice — there are no right or wrong answers. This is about where you are today, not where you want to be.</div>
+    <div class="question-prompt" id="question-prompt"></div>
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <!-- Processing -->
+  <div id="screen-processing" class="hidden processing">
+    <div class="spinner"></div>
+    <h2>Processing your profile...</h2>
+  </div>
+
+  <!-- Results -->
+  <div id="screen-results" class="hidden results">
+    <div class="archetype-name" id="archetype-name"></div>
+    <div class="archetype-tagline" id="archetype-tagline"></div>
+    <div class="score-big" id="score-big"></div>
+    <div class="score-label">Overall Maturity Score</div>
+    <div class="radar-container"><canvas id="radar" width="320" height="320"></canvas></div>
+    <div class="dimensions" id="dimensions"></div>
+    <div class="growth-section" id="growth-section">
+      <div class="growth-title">Your Growth Path</div>
+      <div id="growth-cards"></div>
+    </div>
+    <button class="restart-btn" onclick="restart()">Take Again</button>
+  </div>
+
+  <!-- Pre-explorer -->
+  <div id="screen-pre-explorer" class="hidden pre-explorer">
+    <h2>Pre-Explorer</h2>
+    <p><em>"Your AI journey starts here"</em></p>
+    <p>You haven't started using AI in your development work yet — and that's okay. The AI-native engineering landscape is evolving fast, and there's never been a better time to start exploring.</p>
+    <button class="restart-btn" onclick="restart()">Start Over</button>
+  </div>
+</div>
+
+<script>
+let data = null;
+let currentQ = 0;
+let answers = {};
+let shuffledQuestions = [];
+
+const growthTips = {
+  strategy: "Start intentionally planning which tasks to delegate to AI. Before your next project, identify 3 tasks where AI could own the first draft.",
+  culture: "Share one AI workflow with your team or community this week. Start a channel or doc where people post AI tips — making sharing normal is the first step.",
+  process: "Write a structured spec for your next feature before touching code. Include acceptance criteria that AI can use to generate tests.",
+  tools: "Set up persistent context for your AI tools — project rules files, architecture docs, or memory features. Stop starting from zero every session.",
+  skills: "Practice describing intent, not implementation. Next time you prompt AI, describe WHAT you want and WHY, not HOW to build it.",
+  governance: "Add one automated quality check to your AI workflow — a linter rule, a test coverage gate, or a security scan that runs on all code."
+};
+
+async function init() {
+  const resp = await fetch('./questions.json');
+  data = await resp.json();
+}
+
+function handleScreening(answer) {
+  if (answer === 'no') {
+    hide('screen-screening');
+    show('screen-pre-explorer');
+    return;
+  }
+  hide('screen-screening');
+  show('screen-questions');
+  startQuestions();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuestions() {
+  shuffledQuestions = data.maturityQuestions;
+  currentQ = 0;
+  answers = {};
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = shuffledQuestions[currentQ];
+  const total = shuffledQuestions.length;
+
+  document.getElementById('progress-text').textContent = `${currentQ + 1} of ${total}`;
+  document.getElementById('progress-fill').style.width = `${((currentQ + 1) / total) * 100}%`;
+  document.getElementById('question-prompt').textContent = q.prompt;
+
+  // Show framing text only on first question
+  const framing = document.getElementById('framing-text');
+  if (currentQ === 0) framing.classList.remove('hidden');
+  else framing.classList.add('hidden');
+
+  const answersDiv = document.getElementById('answers');
+  answersDiv.innerHTML = '';
+
+  const shuffled = shuffle(q.answers);
+  shuffled.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = a.text;
+    btn.onclick = () => selectAnswer(q.id, a.level, btn);
+    answersDiv.appendChild(btn);
+  });
+}
+
+function selectAnswer(qId, level, btn) {
+  document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  answers[qId] = level;
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < shuffledQuestions.length) {
+      showQuestion();
+    } else {
+      showProcessing();
+    }
+  }, 300);
+}
+
+function showProcessing() {
+  hide('screen-questions');
+  show('screen-processing');
+  setTimeout(() => {
+    hide('screen-processing');
+    calculateAndShowResults();
+  }, 1800);
+}
+
+function calculateAndShowResults() {
+  const dimQuestions = {};
+  data.maturityQuestions.forEach(q => {
+    if (!dimQuestions[q.dimension]) dimQuestions[q.dimension] = [];
+    dimQuestions[q.dimension].push(q.id);
+  });
+
+  const dimScores = {};
+  for (const [dim, qIds] of Object.entries(dimQuestions)) {
+    const levels = qIds.map(id => answers[id]);
+    const mean = levels.reduce((a, b) => a + b, 0) / levels.length;
+    dimScores[dim] = Math.round(((mean - 1) / 4) * 100);
+  }
+
+  const dims = Object.keys(dimScores);
+  const overall = Math.round(dims.reduce((sum, d) => sum + dimScores[d], 0) / dims.length);
+
+  let archetype = data.archetypes[0];
+  for (const a of data.archetypes) {
+    if (overall >= a.scoreMin && overall <= a.scoreMax) {
+      archetype = a;
+      break;
+    }
+  }
+
+  // Render
+  document.getElementById('archetype-name').textContent = archetype.name;
+  document.getElementById('archetype-tagline').textContent = `"${archetype.tagline}"`;
+  document.getElementById('score-big').textContent = overall;
+
+  // Dimensions breakdown
+  const dimsDiv = document.getElementById('dimensions');
+  dimsDiv.innerHTML = '';
+  const dimOrder = ['strategy', 'culture', 'process', 'tools', 'skills', 'governance'];
+  dimOrder.forEach(d => {
+    const info = data.dimensions.find(x => x.id === d);
+    const row = document.createElement('div');
+    row.className = 'dim-row';
+    row.innerHTML = `
+      <span class="dim-name">${info.name}</span>
+      <div class="dim-bar-wrap"><div class="dim-bar" style="width: ${dimScores[d]}%"></div></div>
+      <span class="dim-score">${dimScores[d]}</span>
+    `;
+    dimsDiv.appendChild(row);
+  });
+
+  // Growth cards — 2 lowest dimensions
+  const sorted = dimOrder.slice().sort((a, b) => dimScores[a] - dimScores[b]);
+  const growthDiv = document.getElementById('growth-cards');
+  growthDiv.innerHTML = '';
+  sorted.slice(0, 2).forEach(d => {
+    const info = data.dimensions.find(x => x.id === d);
+    const card = document.createElement('div');
+    card.className = 'growth-card';
+    card.innerHTML = `<div class="dim">${info.name} — Score: ${dimScores[d]}</div><div class="tip">${growthTips[d]}</div>`;
+    growthDiv.appendChild(card);
+  });
+
+  // Radar chart
+  drawRadar(dimOrder.map(d => dimScores[d]), dimOrder.map(d => {
+    const info = data.dimensions.find(x => x.id === d);
+    return info.name;
+  }));
+
+  show('screen-results');
+}
+
+function drawRadar(values, labels) {
+  const canvas = document.getElementById('radar');
+  const ctx = canvas.getContext('2d');
+  const cx = 160, cy = 160, r = 120;
+  const n = values.length;
+
+  ctx.clearRect(0, 0, 320, 320);
+
+  // Grid
+  for (let ring = 1; ring <= 5; ring++) {
+    const rr = (ring / 5) * r;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + rr * Math.cos(angle);
+      const y = cy + rr * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+    ctx.strokeStyle = '#21262d';
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const idx = i % n;
+    const angle = (Math.PI * 2 * idx / n) - Math.PI / 2;
+    const val = values[idx] / 100;
+    const x = cx + r * val * Math.cos(angle);
+    const y = cy + r * val * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(124, 58, 237, 0.2)';
+  ctx.fill();
+  ctx.strokeStyle = '#7c3aed';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots + labels
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const val = values[i] / 100;
+    const x = cx + r * val * Math.cos(angle);
+    const y = cy + r * val * Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#7c3aed';
+    ctx.fill();
+
+    const lx = cx + (r + 20) * Math.cos(angle);
+    const ly = cy + (r + 20) * Math.sin(angle);
+    ctx.fillStyle = '#8b949e';
+    ctx.textAlign = angle > Math.PI / 2 && angle < Math.PI * 1.5 ? 'right' : (Math.abs(angle + Math.PI/2) < 0.1 || Math.abs(angle - Math.PI*1.5) < 0.1 ? 'center' : 'left');
+    if (Math.abs(Math.cos(angle)) < 0.01) ctx.textAlign = 'center';
+    ctx.fillText(labels[i], lx, ly + 4);
+  }
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+function restart() {
+  hide('screen-results');
+  hide('screen-pre-explorer');
+  show('screen-screening');
+  currentQ = 0;
+  answers = {};
+}
+
+init();
+</script>
+</body>
+</html>

@@ -45,6 +45,7 @@
             "group": "Resources",
             "pages": [
               "resources/maturity-model",
+              "resources/assessment",
               "resources/tools"
             ]
           }
@@ -64,6 +65,9 @@
     }
   },
   "scripts": [
+    {
+      "src": "/scripts/google-analytics.js"
+    },
     {
       "src": "/scripts/footer-logo.js"
     }

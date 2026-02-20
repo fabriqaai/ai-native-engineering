@@ -1,0 +1,353 @@
+{
+  "version": "2.0",
+  "metadata": {
+    "title": "AI-Native Engineering Maturity Assessment",
+    "description": "14 situational-judgment maturity questions across 7 capabilities + 8 market research questions",
+    "estimatedMinutes": 3,
+    "totalMaturityQuestions": 14,
+    "totalMarketResearchQuestions": 8,
+    "answersPerMaturityQuestion": 3,
+    "shuffleAnswers": true,
+    "framingText": "Pick the option closest to your current practice — there are no right or wrong answers. This is about where you are today, not where you want to be."
+  },
+  "screening": {
+    "id": "S1",
+    "prompt": "Do you currently use any AI tools in your development work?",
+    "options": [
+      { "value": "yes", "label": "Yes", "proceed": true },
+      { "value": "no", "label": "No", "proceed": false }
+    ],
+    "fallbackResult": {
+      "archetype": "pre-explorer",
+      "name": "Pre-Explorer",
+      "tagline": "Your AI journey starts here",
+      "description": "You haven't started using AI in your development work yet — and that's okay. The AI-native engineering landscape is evolving fast, and there's never been a better time to start exploring."
+    }
+  },
+  "capabilities": [
+    { "id": "specs", "name": "Spec-Driven Development", "radarLabel": "Specs", "description": "How you define, structure, and maintain specifications that drive AI-assisted development", "questionCount": 2 },
+    { "id": "context", "name": "Context Management", "radarLabel": "Context", "description": "How your AI tools access, retain, and evolve project knowledge", "questionCount": 2 },
+    { "id": "agents", "name": "Agent Collaboration", "radarLabel": "Agents", "description": "How AI agents participate in and coordinate across your development workflow", "questionCount": 2 },
+    { "id": "feedback", "name": "Observability & Feedback Learning", "radarLabel": "Feedback", "description": "How you measure, track, and learn from AI performance in your workflow", "questionCount": 2 },
+    { "id": "governance", "name": "Governance & Trust", "radarLabel": "Governance", "description": "How you ensure quality, safety, and trustworthiness of AI-generated outputs", "questionCount": 2 },
+    { "id": "delivery", "name": "Continuous Specification & Delivery", "radarLabel": "Delivery", "description": "How connected and automated the path is from requirements to production", "questionCount": 2 },
+    { "id": "organization", "name": "Organizational Adaptation", "radarLabel": "Organization", "description": "How your team or organization has evolved its structure and practices around AI", "questionCount": 2 }
+  ],
+  "archetypes": [
+    {
+      "id": "explorer",
+      "name": "The Explorer",
+      "scoreMin": 0,
+      "scoreMax": 20,
+      "tagline": "The AI revolution hasn't hit your workflow yet",
+      "description": "You're aware of AI coding tools and have started experimenting, but AI isn't yet a consistent part of how you work. You're in discovery mode — trying things out, seeing what sticks.",
+      "growthFocus": "Pick one task you do daily and try using AI for it consistently for two weeks. Build the habit before expanding scope."
+    },
+    {
+      "id": "adopter",
+      "name": "The Adopter",
+      "scoreMin": 21,
+      "scoreMax": 40,
+      "tagline": "AI assists you, but you're still in the driver's seat",
+      "description": "AI has found a place in your workflow — you use it for specific tasks and it genuinely helps. But you're still doing most of the orchestration, context management, and quality control manually.",
+      "growthFocus": "Start writing structured specifications before coding. Give AI more context upfront and let it do more of the heavy lifting on implementation."
+    },
+    {
+      "id": "integrator",
+      "name": "The Integrator",
+      "scoreMin": 41,
+      "scoreMax": 60,
+      "tagline": "AI is embedded in your workflow — you'd feel the loss",
+      "description": "AI is a core part of how you build software. You have established practices, your tools work together, and you'd significantly feel the impact if AI was removed from your workflow.",
+      "growthFocus": "Focus on connecting your tools and building feedback loops. Invest in context management so AI can do more with less manual setup."
+    },
+    {
+      "id": "conductor",
+      "name": "The Conductor",
+      "scoreMin": 61,
+      "scoreMax": 80,
+      "tagline": "Your agents do the work, you set the direction",
+      "description": "You've moved beyond using AI as an assistant — you're orchestrating AI workflows, maintaining rich context, and focusing your energy on direction-setting and quality oversight.",
+      "growthFocus": "Build automated feedback loops and invest in observability. Let your systems learn from outcomes and self-improve."
+    },
+    {
+      "id": "architect",
+      "name": "The Architect",
+      "scoreMin": 81,
+      "scoreMax": 100,
+      "tagline": "You're defining how the industry builds with AI",
+      "description": "Your engineering practice is fully AI-native. Specs drive delivery, context flows seamlessly, feedback loops close automatically, and your systems continuously evolve. You're not just using AI — you're pioneering how it's used.",
+      "growthFocus": "Share what you've built. Write about your workflows, contribute to open-source tooling, and help others reach this level."
+    }
+  ],
+  "maturityQuestions": [
+    {
+      "id": "Q1a",
+      "group": "maturity",
+      "capability": "specs",
+      "prompt": "When you start building a new feature, how do you define what needs to be built?",
+      "answers": [
+        { "level": 1, "text": "I describe it in a ticket, chat, or conversation — enough for me to start coding" },
+        { "level": 3, "text": "I write a structured spec that AI agents can read and execute from directly" },
+        { "level": 5, "text": "I set the goal and agents write, evolve, and maintain the spec as they build" }
+      ]
+    },
+    {
+      "id": "Q1b",
+      "group": "maturity",
+      "capability": "specs",
+      "prompt": "How do your specifications relate to your running code?",
+      "answers": [
+        { "level": 1, "text": "They're separate — specs live in docs, code lives in the repo" },
+        { "level": 3, "text": "They're connected — I can trace code back to the original requirement" },
+        { "level": 5, "text": "They co-evolve — when code changes, specs update automatically and vice versa" }
+      ]
+    },
+    {
+      "id": "Q2a",
+      "group": "maturity",
+      "capability": "context",
+      "prompt": "How do your AI tools get context about your project?",
+      "answers": [
+        { "level": 1, "text": "I paste relevant code or docs into the chat each time I need help" },
+        { "level": 3, "text": "I maintain context files and rules that AI tools can reference automatically" },
+        { "level": 5, "text": "Context is shared across tools and sessions — I never re-explain my project" }
+      ]
+    },
+    {
+      "id": "Q2b",
+      "group": "maturity",
+      "capability": "context",
+      "prompt": "What happens to the knowledge generated during a coding session?",
+      "answers": [
+        { "level": 1, "text": "It's mostly lost — each session starts fresh" },
+        { "level": 3, "text": "I capture important findings in project files for the team to reuse" },
+        { "level": 5, "text": "The system remembers and connects new knowledge to existing context automatically" }
+      ]
+    },
+    {
+      "id": "Q3a",
+      "group": "maturity",
+      "capability": "agents",
+      "prompt": "How do AI tools fit into your daily development workflow?",
+      "answers": [
+        { "level": 1, "text": "I use AI for occasional help — autocomplete, chat questions, code snippets" },
+        { "level": 3, "text": "AI handles specific tasks in my workflow — tests, docs, code reviews, or generation" },
+        { "level": 5, "text": "Multiple agents coordinate on complex tasks end-to-end with minimal direction from me" }
+      ]
+    },
+    {
+      "id": "Q3b",
+      "group": "maturity",
+      "capability": "agents",
+      "prompt": "When a task involves multiple steps, how do AI agents participate?",
+      "answers": [
+        { "level": 1, "text": "I do each step myself and ask AI for help on individual pieces" },
+        { "level": 3, "text": "AI handles specific steps, but I coordinate the overall process" },
+        { "level": 5, "text": "I describe the end goal and agents orchestrate the full process" }
+      ]
+    },
+    {
+      "id": "Q4a",
+      "group": "maturity",
+      "capability": "feedback",
+      "prompt": "How do you know if AI is actually helping your development process?",
+      "answers": [
+        { "level": 1, "text": "Gut feeling — I notice when it helps or fails, but don't measure it" },
+        { "level": 3, "text": "I have visibility into AI performance and review it regularly" },
+        { "level": 5, "text": "The system tracks AI performance and automatically adjusts when it underperforms" }
+      ]
+    },
+    {
+      "id": "Q4b",
+      "group": "maturity",
+      "capability": "feedback",
+      "prompt": "What happens when an AI-generated output fails or produces a bug?",
+      "answers": [
+        { "level": 1, "text": "I fix it manually and move on" },
+        { "level": 3, "text": "I update my context, prompts, or rules to prevent the same failure next time" },
+        { "level": 5, "text": "The system detects failure patterns and adapts automatically — it learns without my intervention" }
+      ]
+    },
+    {
+      "id": "Q5a",
+      "group": "maturity",
+      "capability": "governance",
+      "prompt": "How do you ensure AI-generated code is safe and correct before it ships?",
+      "answers": [
+        { "level": 1, "text": "I review it myself — same as any code review" },
+        { "level": 3, "text": "Documented guidelines and automated checks validate AI output quality" },
+        { "level": 5, "text": "Agents audit each other's work with automated verification — every decision is traceable" }
+      ]
+    },
+    {
+      "id": "Q5b",
+      "group": "maturity",
+      "capability": "governance",
+      "prompt": "When AI produces code you don't fully understand, what do you do?",
+      "answers": [
+        { "level": 1, "text": "I rewrite it — I need to understand every line" },
+        { "level": 3, "text": "I validate it against the spec and tests — if it passes checks, I accept it" },
+        { "level": 5, "text": "I trust the verification pipeline — agents check each other and flag what needs human review" }
+      ]
+    },
+    {
+      "id": "Q6a",
+      "group": "maturity",
+      "capability": "delivery",
+      "prompt": "How connected is the path from your requirements to production deployment?",
+      "answers": [
+        { "level": 1, "text": "Loosely — I write code, run tests, and deploy with mostly manual steps" },
+        { "level": 3, "text": "Specs feed into the pipeline and trigger relevant automation" },
+        { "level": 5, "text": "One change flows through everything — specs, code, tests, infra, and docs evolve together" }
+      ]
+    },
+    {
+      "id": "Q6b",
+      "group": "maturity",
+      "capability": "delivery",
+      "prompt": "How do changes in requirements flow through to your delivered software?",
+      "answers": [
+        { "level": 1, "text": "I manually update code, tests, and docs when requirements change" },
+        { "level": 3, "text": "Requirement changes trigger automated updates to related tests and tasks" },
+        { "level": 5, "text": "Agents propagate changes through code, tests, infra, and docs without my intervention" }
+      ]
+    },
+    {
+      "id": "Q7a",
+      "group": "maturity",
+      "capability": "organization",
+      "prompt": "How has AI changed the way you or your team organizes work?",
+      "answers": [
+        { "level": 1, "text": "It hasn't really — individuals experiment on their own" },
+        { "level": 3, "text": "Workflows have been redesigned to include AI as a core part of how we work" },
+        { "level": 5, "text": "Team structure and processes are continuously reshaped based on what AI makes possible" }
+      ]
+    },
+    {
+      "id": "Q7b",
+      "group": "maturity",
+      "capability": "organization",
+      "prompt": "How does your organization invest in AI capabilities for engineering?",
+      "answers": [
+        { "level": 1, "text": "No formal investment — tool access is individual choice" },
+        { "level": 3, "text": "Dedicated budget for AI tools, training, and process integration" },
+        { "level": 5, "text": "AI capability is a strategic priority — it shapes hiring, performance reviews, and team goals" }
+      ]
+    }
+  ],
+  "marketResearchQuestions": [
+    {
+      "id": "M1",
+      "group": "market-research",
+      "type": "multi-select",
+      "prompt": "Which AI coding tools do you actively use?",
+      "options": ["Claude Code", "Cursor", "GitHub Copilot", "Windsurf", "Cline", "Continue.dev", "aider", "Devin", "Codex", "ChatGPT", "Gemini"],
+      "allowOther": true,
+      "required": false,
+      "enrichesCard": true,
+      "cardDisplay": "badges",
+      "fabriqaCategory": "tool-adoption"
+    },
+    {
+      "id": "M2",
+      "group": "market-research",
+      "type": "single-select",
+      "prompt": "How often do you use AI tools in development?",
+      "options": ["Multiple times daily", "Daily", "A few times per week", "A few times per month", "Rarely"],
+      "allowOther": false,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "usage-intensity"
+    },
+    {
+      "id": "M3",
+      "group": "market-research",
+      "type": "multi-select",
+      "prompt": "What do you primarily use AI for?",
+      "maxSelections": 3,
+      "options": ["Code generation", "Code explanation", "Debugging", "Refactoring", "Writing tests", "Code review", "Documentation", "Architecture & design", "Learning", "Project planning"],
+      "allowOther": false,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "use-cases"
+    },
+    {
+      "id": "M4",
+      "group": "market-research",
+      "type": "single-select",
+      "prompt": "What's the biggest friction in your AI coding workflow?",
+      "options": [
+        "Context gets lost between sessions",
+        "AI doesn't understand my codebase well enough",
+        "Output quality is inconsistent",
+        "Too much back-and-forth",
+        "Hard to verify AI code",
+        "Tools don't work together",
+        "Security or compliance restrictions"
+      ],
+      "allowOther": true,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "friction-points"
+    },
+    {
+      "id": "M5",
+      "group": "market-research",
+      "type": "open-text",
+      "prompt": "If you could add one capability to your AI setup, what would it be?",
+      "placeholder": "Describe in 1-2 sentences...",
+      "maxLength": 280,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "missing-capabilities"
+    },
+    {
+      "id": "M6",
+      "group": "market-research",
+      "type": "single-select",
+      "prompt": "How much do you spend on AI coding tools per month?",
+      "options": ["$0 (free tiers only)", "$1-20", "$21-50", "$51-100", "$100+", "My employer pays"],
+      "allowOther": false,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "spending"
+    },
+    {
+      "id": "M7",
+      "group": "market-research",
+      "type": "single-select",
+      "prompt": "How do you primarily work?",
+      "options": ["Solo", "Small team (2-5)", "Medium team (6-20)", "Large org (20+)"],
+      "allowOther": false,
+      "required": false,
+      "enrichesCard": true,
+      "cardDisplay": "label",
+      "fabriqaCategory": "team-context"
+    },
+    {
+      "id": "M8",
+      "group": "market-research",
+      "type": "single-select",
+      "prompt": "What's your role?",
+      "options": ["Individual contributor", "Tech lead", "Engineering manager", "Architect", "CTO/VP Engineering"],
+      "allowOther": true,
+      "required": false,
+      "enrichesCard": false,
+      "fabriqaCategory": "persona"
+    }
+  ],
+  "scoring": {
+    "perAnswer": { "L1": 1, "L3": 3, "L5": 5 },
+    "capabilityFormula": "((mean_of_2_answer_levels - 1) / 4) * 100",
+    "overallFormula": "equal_weight_average_of_7_capability_scores",
+    "radarSpokes": 7,
+    "archetypeRanges": [
+      { "min": 0, "max": 20, "archetypeId": "explorer" },
+      { "min": 21, "max": 40, "archetypeId": "adopter" },
+      { "min": 41, "max": 60, "archetypeId": "integrator" },
+      { "min": 61, "max": 80, "archetypeId": "conductor" },
+      { "min": 81, "max": 100, "archetypeId": "architect" }
+    ]
+  }
+}
