@@ -6,7 +6,9 @@
     "dev": "next dev -p 4100",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "survey:import": "tsx scripts/survey-import.ts",
+    "survey:backfill": "tsx scripts/backfill-normalized.ts"
   },
   "dependencies": {
     "@types/pg": "^8.16.0",
@@ -24,6 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

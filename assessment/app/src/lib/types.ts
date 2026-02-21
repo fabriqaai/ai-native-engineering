@@ -51,18 +51,20 @@ export interface ScreeningOption {
   proceed: boolean;
 }
 
+export interface AssessmentMetadata {
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  totalMaturityQuestions: number;
+  totalMarketResearchQuestions: number;
+  answersPerMaturityQuestion: number;
+  shuffleAnswers: boolean;
+  framingText: string;
+}
+
 export interface AssessmentData {
   version: string;
-  metadata: {
-    title: string;
-    description: string;
-    estimatedMinutes: number;
-    totalMaturityQuestions: number;
-    totalMarketResearchQuestions: number;
-    answersPerMaturityQuestion: number;
-    shuffleAnswers: boolean;
-    framingText: string;
-  };
+  metadata: AssessmentMetadata;
   screening: {
     id: string;
     prompt: string;
@@ -78,6 +80,18 @@ export interface AssessmentData {
   archetypes: Archetype[];
   maturityQuestions: MaturityQuestion[];
   marketResearchQuestions: MarketResearchQuestion[];
+}
+
+export interface ActiveSurveyResponse {
+  survey: {
+    id: string;
+    versionNumber: number;
+    name: string;
+    status: "active";
+    activatedAt: string | null;
+    sourceChecksum: string;
+  };
+  data: AssessmentData;
 }
 
 export interface CapabilityScore {

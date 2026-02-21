@@ -2,19 +2,32 @@ import type {
   MaturityAnswers,
   AssessmentResult,
   CapabilityScore,
+  AssessmentData,
 } from "./types";
-import { getAssessmentData } from "./questions";
 
-export function calculateResults(answers: MaturityAnswers): AssessmentResult {
-  const data = getAssessmentData();
+export function calculateResults(
+  answers: MaturityAnswers,
+  data: AssessmentData
+): AssessmentResult {
   const capabilityScores: CapabilityScore[] = [];
 
   for (const cap of data.capabilities) {
     const capQuestions = data.maturityQuestions.filter(
-      (q) => q.capability === cap.id
+      (question) => question.capability === cap.id
     );
-    const levels = capQuestions.map((q) => answers[q.id] ?? 1);
-    const mean = levels.reduce((a, b) => a + b, 0) / levels.length;
+
+    if (capQuestions.length === 0) {
+      capabilityScores.push({
+        id: cap.id,
+        name: cap.name,
+        radarLabel: cap.radarLabel,
+        score: 0,
+      });
+      continue;
+    }
+
+    const levels = capQuestions.map((question) => answers[question.id] ?? 1);
+    const mean = levels.reduce((sum, level) => sum + level, 0) / levels.length;
     const score = ((mean - 1) / 4) * 100;
 
     capabilityScores.push({
@@ -26,13 +39,14 @@ export function calculateResults(answers: MaturityAnswers): AssessmentResult {
   }
 
   const overallScore = Math.round(
-    capabilityScores.reduce((sum, c) => sum + c.score, 0) /
-      capabilityScores.length
+    capabilityScores.reduce((sum, capability) => sum + capability.score, 0) /
+      Math.max(capabilityScores.length, 1)
   );
 
   const archetype =
     data.archetypes.find(
-      (a) => overallScore >= a.scoreMin && overallScore <= a.scoreMax
+      (candidate) =>
+        overallScore >= candidate.scoreMin && overallScore <= candidate.scoreMax
     ) ?? data.archetypes[0];
 
   const sorted = [...capabilityScores].sort((a, b) => a.score - b.score);

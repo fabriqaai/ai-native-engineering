@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import type { Answer } from "@/lib/types";
 import { shuffleAnswers } from "@/lib/questions";
 
@@ -21,13 +21,8 @@ export default function QuestionCard({
   totalQuestions,
   onAnswer,
 }: QuestionCardProps) {
-  const [shuffled, setShuffled] = useState<Answer[]>([]);
+  const shuffled = useMemo(() => shuffleAnswers(answers), [answers]);
   const [selected, setSelected] = useState<number | null>(null);
-
-  useEffect(() => {
-    setShuffled(shuffleAnswers(answers));
-    setSelected(null);
-  }, [questionId, answers]);
 
   const handleSelect = (level: number) => {
     setSelected(level);

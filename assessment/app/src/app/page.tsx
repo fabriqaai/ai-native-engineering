@@ -1,13 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { getScreening } from "@/lib/questions";
+import { fetchActiveSurveyWithFallback } from "@/lib/questions";
+import type { AssessmentData } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();
-  const screening = getScreening();
   const [showScreening, setShowScreening] = useState(false);
+  const [surveyData, setSurveyData] = useState<AssessmentData | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchActiveSurveyWithFallback()
+      .then((response) => {
+        if (!active) return;
+        setSurveyData(response.data);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSurveyData(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleScreening(proceed: boolean) {
     if (proceed) {
@@ -17,12 +36,21 @@ export default function Home() {
     }
   }
 
+  if (!surveyData) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4">
+        <p className="text-muted">Loading assessment...</p>
+      </main>
+    );
+  }
+
+  const screening = surveyData.screening;
+
   return (
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-xl w-full text-center">
         {!showScreening ? (
           <div className="animate-fade-in">
-            {/* Hero */}
             <div className="mb-2 text-xs uppercase tracking-widest text-muted">
               ainative.engineering
             </div>
@@ -37,7 +65,6 @@ export default function Home() {
               maturity card.
             </p>
 
-            {/* Stats */}
             <div className="flex justify-center gap-8 mb-10 text-sm text-muted">
               <div>
                 <div className="font-mono text-2xl text-foreground">14</div>
@@ -66,18 +93,15 @@ export default function Home() {
           </div>
         ) : (
           <div className="animate-fade-in">
-            {/* Screening question */}
-            <h2 className="text-2xl font-semibold mb-8">
-              {screening.prompt}
-            </h2>
+            <h2 className="text-2xl font-semibold mb-8">{screening.prompt}</h2>
             <div className="space-y-3 max-w-sm mx-auto">
-              {screening.options.map((opt) => (
+              {screening.options.map((option) => (
                 <button
-                  key={opt.value}
-                  onClick={() => handleScreening(opt.proceed)}
+                  key={option.value}
+                  onClick={() => handleScreening(option.proceed)}
                   className="w-full p-4 rounded-lg border border-border bg-card hover:border-accent/50 hover:bg-card-hover text-foreground transition-all cursor-pointer"
                 >
-                  {opt.label}
+                  {option.label}
                 </button>
               ))}
             </div>

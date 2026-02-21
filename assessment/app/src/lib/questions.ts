@@ -1,26 +1,68 @@
-import assessmentData from "../../questions.json";
-import type { AssessmentData, MaturityQuestion, Answer } from "./types";
+import fallbackAssessmentData from "../../questions.json";
+import type {
+  ActiveSurveyResponse,
+  AssessmentData,
+  MaturityQuestion,
+  Answer,
+} from "./types";
 
-const data = assessmentData as unknown as AssessmentData;
+const fallbackData = fallbackAssessmentData as unknown as AssessmentData;
+
+const fallbackSurveyResponse: ActiveSurveyResponse = {
+  survey: {
+    id: "local-fallback",
+    versionNumber: 0,
+    name: "Local Fallback Survey",
+    status: "active",
+    activatedAt: null,
+    sourceChecksum: "local-dev-fallback",
+  },
+  data: fallbackData,
+};
+
+export function getFallbackSurveyResponse(): ActiveSurveyResponse {
+  return fallbackSurveyResponse;
+}
 
 export function getAssessmentData(): AssessmentData {
-  return data;
+  return fallbackData;
 }
 
 export function getMaturityQuestions(): MaturityQuestion[] {
-  return data.maturityQuestions;
+  return fallbackData.maturityQuestions;
 }
 
 export function getMarketResearchQuestions() {
-  return data.marketResearchQuestions;
+  return fallbackData.marketResearchQuestions;
 }
 
 export function getCapabilities() {
-  return data.capabilities;
+  return fallbackData.capabilities;
 }
 
 export function getScreening() {
-  return data.screening;
+  return fallbackData.screening;
+}
+
+export async function fetchActiveSurvey(): Promise<ActiveSurveyResponse> {
+  const response = await fetch("/api/survey/active", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch active survey: ${response.status}`);
+  }
+
+  return (await response.json()) as ActiveSurveyResponse;
+}
+
+export async function fetchActiveSurveyWithFallback(): Promise<ActiveSurveyResponse> {
+  try {
+    return await fetchActiveSurvey();
+  } catch {
+    return getFallbackSurveyResponse();
+  }
 }
 
 export function shuffleAnswers(answers: Answer[]): Answer[] {
